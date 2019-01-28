@@ -1,4 +1,4 @@
-TO USE IT:
+TO USE IT IN Termux (https://termux.com):
 
     you do this once:
         git clone https://github.com/crackleware/tor-share-location

@@ -19,16 +19,16 @@ from flask import Flask, send_file
 
 from common import tile_deg2num
 
-WEB_PORT = 8088
+WEB_SOCKET = 'srv.sock'
 SOCKS_SOCKET = 'tor-socks.sock'
 CONTROL_SOCKET = 'tor-control.sock'
-HIDDEN_SERVICE_DIR = 'tmp2'
 
 app = Flask(__name__)
 
-import logging
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
+if 0:
+    import logging
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
 
 path = ''.join(random.sample(string.ascii_letters, 1)[0]
         for _ in range(10))
@@ -95,17 +95,29 @@ def index():
             %(imgs)s
             ''' % locals())
 
-@app.route('/'+path+'/tiles/<z>/<t>')
-def tile(z, t):
-    z = int(z)
-    x, y = map(int, t.split('.')[0].split('-'))
-    print((z, x, y))
-    fn = 'maps/tiles/%d/%d-%d.png' % (z, x, y)
-    return send_file(fn, mimetype='image/png')
+# @app.route('/'+path+'/tiles/<z>/<t>')
+# def tile(z, t):
+#     z = int(z)
+#     x, y = map(int, t.split('.')[0].split('-'))
+#     print((z, x, y))
+#     fn = 'maps/tiles/%d/%d-%d.png' % (z, x, y)
+#     return send_file(fn, mimetype='image/png')
 
 def start_web_app():
     print('Starting web app...')
-    app.run(port=WEB_PORT, threaded=True, debug=False)
+    if os.path.exists(WEB_SOCKET):
+        os.remove(WEB_SOCKET)
+    import socket
+    from werkzeug.serving import make_server, WSGIRequestHandler
+    WSGIRequestHandler.address_string = lambda self: '?'
+    WSGIRequestHandler.port_integer = lambda self: 777
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(WEB_SOCKET)
+    fd = sock.fileno()
+    sock.listen(1)
+    srv = make_server(host='', port=None, app=app, threaded=True, fd=fd)
+    srv.serve_forever()
 
 def gps_tracker():
     while True:
@@ -169,7 +181,9 @@ def main():
 
     try:
         print('Creating hidden service...')
-        res = c.create_ephemeral_hidden_service({80: WEB_PORT}, await_publication=True)
+        res = c.create_ephemeral_hidden_service({
+            80: 'unix:'+WEB_SOCKET,
+        }, await_publication=True)
         assert res.is_ok()
         svcid = res.service_id
         link = 'http://%s.onion/%s' % (svcid, path)
@@ -187,6 +201,8 @@ def main():
         subprocess.check_output('termux-share -a send', shell=True, input=link.encode())
 
     input('Press enter to quit sharing location> ')
+
+    c.remove_ephemeral_hidden_service(svcid)
 
     c.close()
 

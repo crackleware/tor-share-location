@@ -73,3 +73,5 @@ for i, (z, x, y) in enumerate(tiles_iter()):
             print(e)
         time.sleep(1)
 
+print('Finished.')
+

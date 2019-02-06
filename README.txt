@@ -1,5 +1,7 @@
 TO USE IT IN Termux (https://termux.com):
 
+    install Termux (https://play.google.com/store/apps/details?id=com.termux)
+
     install Termux:API (https://play.google.com/store/apps/details?id=com.termux.api)
 
     you do this once:

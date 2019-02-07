@@ -109,14 +109,16 @@ def start_web_app():
         os.remove(WEB_SOCKET)
     import socket
     from werkzeug.serving import make_server, WSGIRequestHandler
-    WSGIRequestHandler.address_string = lambda self: '?'
-    WSGIRequestHandler.port_integer = lambda self: 777
+    class UnixDomainRequestHandler(WSGIRequestHandler):
+        def address_string(self): return '?'
+        def port_integer(self): return 777
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(WEB_SOCKET)
     fd = sock.fileno()
     sock.listen(1)
-    srv = make_server(host='', port=None, app=app, threaded=True, fd=fd)
+    srv = make_server(host='', port=None, app=app, threaded=True,
+                      request_handler=UnixDomainRequestHandler, fd=fd)
     srv.serve_forever()
 
 def gps_tracker():

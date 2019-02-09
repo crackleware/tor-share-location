@@ -1,3 +1,21 @@
+HOW IT WORKS:
+
+	you run tor-share-location.py. it's a console program. it will start
+	tor subprocess and generate secret onion url to web page on internal
+	web server showing current device location on a map. you can send this
+	secret onion url to anyone who should be able to see your location.
+	when they receive the onion url they browse to it in tor browser on
+	their device. they see your location. the program will notify you each
+	time they request your location. when you press enter the program will
+	exit, stopping tor subprocess and internal web server.
+
+	the program uses tor control protocol over unix domain socket
+	to create ephemeral hidden service which is forwarding all requests to
+	internal web server. internal web server is also accepting HTTP
+	requests only over unix domain socket. internal web server will serve
+	static html page containing map images for several zoom levels. filled
+	blue circle on a map indicates current location of device.
+
 TO USE IT IN Termux (https://termux.com):
 
     install Termux (https://play.google.com/store/apps/details?id=com.termux)
